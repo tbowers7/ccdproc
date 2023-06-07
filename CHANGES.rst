@@ -1,4 +1,4 @@
-2.4.1 (unreleased)
+2.4.2 (unreleased)
 ------------------
 
 New Features
@@ -9,6 +9,9 @@ Other Changes and Additions
 
 Bug Fixes
 ^^^^^^^^^
+
+- Checks that filenames passed to ImageFileCollection actually
+  exist before including them in ``.files``.  [#80x]
 
 2.4.1 (2023-05-30)
 ------------------

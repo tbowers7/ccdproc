@@ -462,7 +462,8 @@ class ImageFileCollection:
                 files = [file for file in files
                          if not fnmatch.fnmatch(file, self.glob_exclude)]
 
-        return files
+        # Check that specified files actually exist before return
+        return [f for f in files if path.isfile(path.join(self.location,f))]
 
     def _dict_from_fits_header(self, file_name, input_summary=None,
                                missing_marker=None):
