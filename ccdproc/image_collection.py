@@ -12,7 +12,6 @@ import numpy.ma as ma
 
 from astropy.table import Table, MaskedColumn
 import astropy.io.fits as fits
-from astropy.utils import minversion
 
 import warnings
 from astropy.utils.exceptions import AstropyUserWarning
@@ -23,8 +22,6 @@ logger = logging.getLogger(__name__)
 
 __all__ = ['ImageFileCollection']
 __doctest_skip__ = ['*']
-
-_ASTROPY_LT_1_3 = not minversion("astropy", "1.3")
 
 
 class ImageFileCollection:
@@ -804,7 +801,6 @@ class ImageFileCollection:
 
     def _generator(self, return_type,
                    save_with_name="", save_location='',
-                   clobber=False,
                    overwrite=False,
                    do_not_scale_image_data=True,
                    return_fname=False,
@@ -838,10 +834,6 @@ class ImageFileCollection:
 
         overwrite : bool, optional
             If ``True``, overwrite input FITS files.
-            Default is ``False``.
-
-        clobber : bool, optional
-            Alias for ``overwrite``.
             Default is ``False``.
 
         do_not_scale_image_data : bool, optional
@@ -939,20 +931,9 @@ class ImageFileCollection:
 
             new_path = path.join(destination_dir, basename)
 
-            # I really should have called the option overwrite from
-            # the beginning. The hack below ensures old code works,
-            # at least...
-            if clobber or overwrite:
-                if _ASTROPY_LT_1_3:
-                    nuke_existing = {'clobber': True}
-                else:
-                    nuke_existing = {'overwrite': True}
-            else:
-                nuke_existing = {}
-
             if return_type == 'ccd':
                 pass
-            elif (new_path != full_path) or nuke_existing:
+            elif (new_path != full_path) or overwrite:
                 with fits.open(full_path, **add_kwargs) as hdulist:
                     ext_index = hdulist.index_of(self.ext)
                     if return_type == 'hdu':
@@ -963,7 +944,7 @@ class ImageFileCollection:
                         hdulist[ext_index].header = return_thing
 
                     try:
-                        hdulist.writeto(new_path, **nuke_existing)
+                        hdulist.writeto(new_path, overwrite=overwrite)
                     except IOError:
                         logger.error('error writing file %s', new_path)
                         raise
@@ -992,8 +973,8 @@ class ImageFileCollection:
                                do_not_scale_image_data=do_not_scale_image_data,
                                **kwd)
     hdus.__doc__ = _generator.__doc__.format(
-        name='HDUList', default_scaling='False',
-        return_type='astropy.io.fits.HDUList')
+        name='HDU', default_scaling='False',
+        return_type="`, ` ".join(('astropy.io.fits.PrimaryHDU', 'astropy.io.fits.ImageHDU')))
 
     def data(self, do_not_scale_image_data=False, **kwd):
         return self._generator('data',
@@ -1003,9 +984,15 @@ class ImageFileCollection:
         name='image', default_scaling='False', return_type='numpy.ndarray')
 
     def ccds(self, ccd_kwargs=None, **kwd):
-        if kwd.get('clobber') or kwd.get('overwrite'):
-            raise NotImplementedError(
-                "overwrite=True (or clobber=True) is not supported for CCDs.")
+        if (clobber := kwd.get('clobber')) is not None:
+            warnings.warn(
+                "The 'clobber' keyword argument is a deprecated alias for 'overwrite'",
+                category=DeprecationWarning,
+                stacklevel=2
+            )
+            kwd["overwrite"] = clobber
+        if kwd.get('overwrite'):
+            raise NotImplementedError("overwrite=True is not supported for CCDs.")
         return self._generator('ccd', ccd_kwargs=ccd_kwargs, **kwd)
     ccds.__doc__ = _generator.__doc__.format(
         name='CCDData', default_scaling='True', return_type='astropy.nddata.CCDData')

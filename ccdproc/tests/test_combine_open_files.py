@@ -20,8 +20,6 @@ common_args = [sys.executable, str(run_dir / 'run_with_file_number_limit.py'),
 # Regression test for #629
 @pytest.mark.skipif(os.environ.get('APPVEYOR') or os.sys.platform == 'win32',
                     reason='Test relies on linux/osx features of psutil')
-@pytest.mark.skipif(sys.version_info < (3, 5),
-                    reason='Test requires subprocess.run, introduced in 3.5')
 def test_open_files_combine_no_chunks():
     """
     Test that we are not opening (much) more than the number of files
@@ -30,8 +28,7 @@ def test_open_files_combine_no_chunks():
     # Make a copy
     args = list(common_args)
     args.extend(['--open-by', 'combine-nochunk', NUM_FILE_LIMIT])
-    p = subprocess.run(args=args, stderr=subprocess.PIPE,
-                       cwd=str(subprocess_dir))
+    p = subprocess.run(args=args, cwd=str(subprocess_dir))
     # If we have succeeded the test passes. We are only checking that
     # we don't have too many files open.
     assert p.returncode == 0
@@ -40,8 +37,6 @@ def test_open_files_combine_no_chunks():
 # Regression test for #629
 @pytest.mark.skipif(os.environ.get('APPVEYOR') or os.sys.platform == 'win32',
                     reason='Test relies on linux/osx features of psutil')
-@pytest.mark.skipif(sys.version_info < (3, 5),
-                    reason='Test requires subprocess.run, introduced in 3.5')
 def test_open_files_combine_chunks():
     """
     Test that we are not opening (much) more than the number of files
@@ -50,8 +45,7 @@ def test_open_files_combine_chunks():
     # Make a copy
     args = list(common_args)
     args.extend(['--open-by', 'combine-chunk', NUM_FILE_LIMIT])
-    p = subprocess.run(args=args, stderr=subprocess.PIPE,
-                       cwd=str(subprocess_dir))
+    p = subprocess.run(args=args, cwd=str(subprocess_dir))
     # If we have succeeded the test passes. We are only checking that
     # we don't have too many files open.
     assert p.returncode == 0

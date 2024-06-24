@@ -755,7 +755,7 @@ class TestImageFileCollection:
         ic = ImageFileCollection(triage_setup.test_dir)
         with pytest.raises(NotImplementedError):
             ic.ccds(overwrite=True)
-        with pytest.raises(NotImplementedError):
+        with pytest.deprecated_call(), pytest.raises(NotImplementedError):
             ic.ccds(clobber=True)
 
     def test_glob_matching(self, triage_setup):
@@ -952,6 +952,7 @@ class TestImageFileCollection:
 
         assert n_heads == expected_heads
 
+    @pytest.mark.filterwarnings("ignore:The following header keyword is invalid:UserWarning")
     def test_less_strict_verify_option(self, triage_setup):
         # Tests for feature request
         #
